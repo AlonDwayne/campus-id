@@ -1,7 +1,32 @@
+"""
+Email delivery for Campus_ID.
+
+Three delivery modes, tried in this order:
+
+1. Resend HTTP API (recommended for Render's free tier, which blocks
+   outbound SMTP on ports 25, 465, and 587).
+2. SMTP on port 2525 (Render allows this port even on the free tier,
+   but most consumer mail providers do not listen on it).
+3. Console printing, used in dev when no credentials are configured.
+
+Set RESEND_API_KEY to enable Resend. Otherwise, set the SMTP_* variables.
+"""
+
+import os
 import smtplib
 from email.message import EmailMessage
 
+import requests
+
 from .config import Config
+
+
+# ============================================================
+# Delivery
+# ============================================================
+
+def _resend_configured():
+    return bool(os.getenv("RESEND_API_KEY"))
 
 
 def _smtp_configured():
@@ -13,28 +38,81 @@ def _smtp_configured():
     ])
 
 
-def send_email(to_email, subject, body):
-    if not _smtp_configured():
-        print(
-            f"\n--- EMAIL (dev mode) ---\n"
-            f"To: {to_email}\n"
-            f"Subject: {subject}\n\n"
-            f"{body}\n"
-            f"--- END EMAIL ---\n"
-        )
-        return
+def _send_via_resend(to_email, subject, body):
+    resp = requests.post(
+        "https://api.resend.com/emails",
+        headers={
+            "Authorization": f"Bearer {os.getenv('RESEND_API_KEY')}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "from": Config.SMTP_FROM or "onboarding@resend.dev",
+            "to": [to_email],
+            "subject": subject,
+            "text": body,
+        },
+        timeout=15,
+    )
+    if not resp.ok:
+        raise RuntimeError(f"Resend error {resp.status_code}: {resp.text}")
+    return resp.json()
 
+
+def _send_via_smtp(to_email, subject, body):
     message = EmailMessage()
     message["Subject"] = subject
     message["From"] = Config.SMTP_FROM
     message["To"] = to_email
     message.set_content(body)
 
-    with smtplib.SMTP(Config.SMTP_HOST, Config.SMTP_PORT, timeout=15) as server:
+    with smtplib.SMTP(Config.SMTP_HOST, Config.SMTP_PORT, timeout=20) as server:
         server.starttls()
         server.login(Config.SMTP_USERNAME, Config.SMTP_PASSWORD)
         server.send_message(message)
 
+
+def _print_to_console(to_email, subject, body):
+    print(
+        f"\n--- EMAIL (dev mode) ---\n"
+        f"To: {to_email}\n"
+        f"Subject: {subject}\n\n"
+        f"{body}\n"
+        f"--- END EMAIL ---\n"
+    )
+
+
+def send_email(to_email, subject, body):
+    """Send an email using the first available delivery method."""
+    if _resend_configured():
+        return _send_via_resend(to_email, subject, body)
+
+    if _smtp_configured():
+        return _send_via_smtp(to_email, subject, body)
+
+    return _print_to_console(to_email, subject, body)
+
+
+def smtp_status():
+    """Returns a dict describing the current email configuration."""
+    return {
+        "resend_configured": _resend_configured(),
+        "smtp_configured": _smtp_configured(),
+        "smtp_host": Config.SMTP_HOST or None,
+        "smtp_port": Config.SMTP_PORT,
+        "smtp_username_set": bool(Config.SMTP_USERNAME),
+        "smtp_from": Config.SMTP_FROM or None,
+        "frontend_url": Config.FRONTEND_URL,
+        "active_mode": (
+            "resend" if _resend_configured()
+            else "smtp" if _smtp_configured()
+            else "console"
+        ),
+    }
+
+
+# ============================================================
+# Templates
+# ============================================================
 
 def send_verification_email(email, full_name, link):
     body = f"""Hello {full_name},
