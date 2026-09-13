@@ -3,3 +3,5 @@ flask-bcrypt
 psycopg2-binary
 python-dotenv
 requests
+openpyxl
+gunicorn
