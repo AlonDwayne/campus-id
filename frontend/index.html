@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniZulu Card Services — Student Card Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="shell">
+
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20 4 C13 10 4 12 2 13 C7 15 12 15 16 13 C13 18 10 24 4 29 C11 28 17 24 20 18 C23 24 29 28 36 29 C30 24 27 18 24 13 C28 15 33 15 38 13 C36 12 27 10 20 4Z" fill="#C99A2E"/>
+      </svg>
+      <div class="brand-text">
+        <span class="brand-name">UNIZULU</span>
+        <span class="brand-sub">Card Services</span>
+      </div>
+    </div>
+    <div id="stepper" class="stepper"></div>
+
+    <div id="userchip" class="userchip" hidden>
+      <button class="userchip-btn" id="userchip-btn" aria-haspopup="true" aria-expanded="false">
+        <span class="dot"></span>
+        <span id="userchip-name"></span>
+        <span class="consent-badge" id="userchip-popia" title="POPIA consent on record" hidden>POPIA ✓</span>
+        <span class="chev">▾</span>
+      </button>
+      <div class="userchip-menu" id="userchip-menu" hidden>
+        <button class="menu-item" id="menu-profile">View profile</button>
+        <button class="menu-item" id="menu-change-pass">Change password</button>
+        <button class="menu-item" id="menu-dashboard">Dashboard</button>
+        <button class="menu-item" id="menu-admin" hidden>Admin — review queue</button>
+        <div class="menu-sep"></div>
+        <button class="menu-item" id="menu-logout">Log out</button>
+        <button class="menu-item danger" id="menu-delete">Delete account…</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+
+    <!-- SCREEN 1: AUTH -->
+    <section id="screen-auth" class="screen active">
+      <div class="eyebrow">Step 01</div>
+      <h1>Log in or create your account</h1>
+      <p class="lede">Start by signing in, or set up a new account and select the campus you're registered at. Card issuance below is currently live for University of Zululand students.</p>
+
+      <div class="panel">
+        <div class="tabs">
+          <div class="tab active" id="tab-create">Create account</div>
+          <div class="tab" id="tab-login">Log in</div>
+        </div>
+
+        <div id="auth-create">
+          <div class="field-grid">
+            <div class="field">
+              <label>Full name</label>
+              <input type="text" id="in-name" placeholder="e.g. Student One">
+            </div>
+            <div class="field">
+              <label>Student Number</label>
+              <input type="text" id="in-studno" placeholder="e.g. 202600001">
+            </div>
+            <div class="field">
+              <label>Email address</label>
+              <input type="email" id="in-email" placeholder="you@example.com">
+            </div>
+          </div>
+          <div class="field-grid">
+            <div class="field">
+              <label>Password</label>
+              <input type="password" id="in-pass" placeholder="At least 8 characters">
+            </div>
+            <div class="field">
+              <label>Confirm password</label>
+              <input type="password" id="in-pass2" placeholder="••••••••">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Campus</label>
+            <select id="in-campus">
+              <option value="">— Select your campus —</option>
+              <option value="Kwadlangenzwa">Kwadlangenzwa</option>
+              <option value="Richards Bay">Richards Bay</option>
+            </select>
+          </div>
+
+          <div class="popia-box">
+            <label class="popia-check">
+              <input type="checkbox" id="in-popia">
+              <span>
+                I have read and agree to the
+                <a href="#" id="link-popia">POPIA Privacy Notice</a>.
+                I consent to the University of Zululand collecting, storing, and
+                processing my personal information (name, student number, email,
+                and the documents I upload) for the purpose of issuing and
+                managing my student card. If I choose the online pathway, I
+                understand a live selfie and a photo of my ID will be used to
+                verify my identity. I may withdraw consent at any time by
+                contacting the Information Officer.
+              </span>
+            </label>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-create" disabled>Create account &amp; continue</button>
+          </div>
+          <div class="hint" id="auth-status"></div>
+        </div>
+
+        <div id="auth-login" style="display:none;">
+          <div class="field-grid">
+            <div class="field">
+              <label>Student Number</label>
+              <input type="text" id="in-login-email" placeholder="e.g. 202600001">
+            </div>
+            <div class="field">
+              <label>Password</label>
+              <input type="password" id="in-login-pass" placeholder="••••••••">
+            </div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="btn-login" disabled>Log in</button>
+            <button class="btn btn-ghost" id="btn-demo">Use demo details</button>
+          </div>
+          <div class="btn-row" id="resend-row" style="display:none;">
+            <button class="btn btn-ghost" id="btn-resend-verification">Resend verification email</button>
+          </div>
+          <div class="hint" id="auth-status-login"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN: HOME DASHBOARD -->
+    <section id="screen-home" class="screen">
+      <div class="eyebrow">Your dashboard</div>
+      <h1 id="home-greeting">Welcome back</h1>
+      <p class="lede" id="home-lede">Here's where things stand with your student card. Pick up wherever you left off.</p>
+
+      <div class="home-status-row" id="home-status-row"></div>
+
+      <div class="pathway-section" id="pathway-section">
+        <div class="pathway-head">
+          <div class="eyebrow">Choose your pathway</div>
+          <h2>How would you like to get your card?</h2>
+          <p class="lede">Both paths end with a confirmed booking and a QR code. Pick whichever suits you.</p>
+        </div>
+        <div class="choice-grid">
+          <div class="choice-card" id="choice-1">
+            <div class="ctag">Option 01</div>
+            <h3>Produce it online, collect on campus</h3>
+            <p>Upload your ID and proof of registration, verify your identity online, and we'll print your card in advance. You just pick a day and hour to collect it.</p>
+            <div class="meta">Requires: ID + proof of registration · online identity check</div>
+            <div class="go">Choose this path →</div>
+          </div>
+          <div class="choice-card" id="choice-2">
+            <div class="ctag">Option 02</div>
+            <h3>Make it at campus on the day</h3>
+            <p>Just upload your proof of registration, book a slot, and come to campus. Staff will verify your ID, take your photo, and produce your card on the spot.</p>
+            <div class="meta">Requires: proof of registration · ID checked in person</div>
+            <div class="go">Choose this path →</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel home-panel" id="home-docs-panel" hidden></div>
+      <div class="panel home-panel booked-panel" id="home-booked-panel" hidden></div>
+    </section>
+
+    <!-- SCREEN: DOCUMENT UPLOAD -->
+    <section id="screen-upload" class="screen">
+      <div class="eyebrow" id="upload-eyebrow">Step 02</div>
+      <h1 id="upload-title">Upload your documents</h1>
+      <p class="lede" id="upload-lede">All documents must be PDF format (max 10 MB each).</p>
+
+      <div class="panel">
+        <div class="doc-grid">
+          <div class="dropzone" id="dz-id" hidden>
+            <div class="dz-icon" id="dz-id-icon">🪪</div>
+            <div class="dz-text">
+              <div class="dz-title">Identity document <span class="req">Required</span></div>
+              <div class="dz-sub" id="dz-id-sub">SA ID, smart ID card, or valid passport — PDF only</div>
+            </div>
+            <div class="dz-status" id="dz-id-status"></div>
+          </div>
+
+          <div class="dropzone" id="dz-registration">
+            <div class="dz-icon" id="dz-registration-icon">📄</div>
+            <div class="dz-text">
+              <div class="dz-title">Proof of registration <span class="req">Required</span></div>
+              <div class="dz-sub" id="dz-registration-sub">Official registration letter or statement — PDF only</div>
+            </div>
+            <div class="dz-status" id="dz-registration-status"></div>
+          </div>
+
+          <div class="residence-toggle">
+            <label class="toggle-row">
+              <input type="checkbox" id="in-oncampus">
+              <span>I stay in on-campus university residences</span>
+            </label>
+          </div>
+
+          <div class="dropzone" id="dz-residence" hidden>
+            <div class="dz-icon" id="dz-residence-icon">🏠</div>
+            <div class="dz-text">
+              <div class="dz-title">Proof of residence <span class="opt">Optional</span></div>
+              <div class="dz-sub" id="dz-residence-sub">Residence allocation letter or lease — PDF only</div>
+            </div>
+            <div class="dz-status" id="dz-residence-status"></div>
+          </div>
+        </div>
+
+        <input type="file" id="file-input" style="display:none" accept="application/pdf,.pdf">
+        <div class="hint" id="upload-hint"></div>
+
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-upload-back">Back</button>
+          <button class="btn btn-primary" id="btn-docs-continue" disabled>Continue</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN: IDENTITY VERIFICATION -->
+    <section id="screen-verify" class="screen">
+      <div class="eyebrow">Step 03 · Option 01</div>
+      <h1>Verify your identity</h1>
+      <p class="lede">We compare a live selfie with your ID document to confirm it's really you. This keeps your card and your personal information safe.</p>
+
+      <div class="panel">
+        <div class="field">
+          <label>ID number</label>
+          <input type="text" id="in-idnumber" placeholder="e.g. 0001015800085">
+        </div>
+
+        <div class="capture-row">
+          <div class="capture-col">
+            <div class="capture-slot" id="slot-id-photo"><span>Photograph your ID</span></div>
+            <button class="btn btn-ghost" id="btn-capture-id">📷 Capture ID</button>
+          </div>
+          <div class="capture-col">
+            <div class="capture-slot" id="slot-selfie"><span>Take a live selfie</span></div>
+            <button class="btn btn-ghost" id="btn-capture-selfie">🤳 Capture selfie</button>
+          </div>
+        </div>
+
+        <div class="camera-panel" id="verify-camera-panel" hidden>
+          <video id="verify-camera-video" autoplay playsinline muted></video>
+          <canvas id="verify-camera-canvas" style="display:none;"></canvas>
+          <div class="camera-actions">
+            <button class="btn btn-primary" id="btn-verify-capture">Capture</button>
+            <button class="btn btn-ghost" id="btn-verify-cancel">Cancel</button>
+          </div>
+          <div class="hint" id="verify-camera-hint"></div>
+        </div>
+
+        <div class="hint" id="verify-status"></div>
+
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-verify-back">Back to dashboard</button>
+          <button class="btn btn-primary" id="btn-verify-submit" disabled>Submit for verification</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PHOTO -->
+    <section id="screen-photo" class="screen">
+      <div class="eyebrow">Step 04 · Option 01</div>
+      <h1>Add your photo</h1>
+      <p class="lede">This photo is used only on your card preview below. Face the camera directly, plain background, no headwear unless for religious or medical reasons.</p>
+      <div class="panel">
+        <div class="photo-row">
+          <div class="photo-col">
+            <div class="photo-slot" id="photo-slot">Add a photo to preview it here</div>
+            <div class="photo-actions" id="photo-actions">
+              <button class="btn btn-ghost" id="btn-upload-photo">⬆ Upload a photo</button>
+              <button class="btn btn-ghost" id="btn-camera">📷 Capture with camera</button>
+            </div>
+            <div class="camera-panel" id="camera-panel" hidden>
+              <video id="camera-video" autoplay playsinline muted></video>
+              <canvas id="camera-canvas" style="display:none;"></canvas>
+              <div class="camera-actions">
+                <button class="btn btn-primary" id="btn-capture">Capture photo</button>
+                <button class="btn btn-ghost" id="btn-cancel-camera">Cancel</button>
+              </div>
+              <div class="hint" id="camera-hint"></div>
+            </div>
+          </div>
+          <div class="photo-tips">
+            <ul>
+              <li>Good, even lighting on your face</li>
+              <li>Look straight at the camera</li>
+              <li>No sunglasses or filters</li>
+              <li>Photo will appear exactly like this on your printed card</li>
+            </ul>
+          </div>
+        </div>
+        <input type="file" id="photo-input" accept="image/*" style="display:none">
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-photo-back">Back</button>
+          <button class="btn btn-primary" id="btn-photo-continue" disabled>Continue to card preview</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CARD PREVIEW -->
+    <section id="screen-preview" class="screen">
+      <div class="eyebrow">Step 05 · Option 01</div>
+      <h1>Verify your card details</h1>
+      <p class="lede">This is a demo of the card that will be produced. Check every field carefully — corrections here are free; corrections after printing are not.</p>
+      <div class="panel">
+        <div class="preview-wrap">
+          <div class="idcard" id="idcard-preview"></div>
+          <div class="verify-form">
+            <div class="field"><label>Full name</label><input type="text" id="v-name"></div>
+            <div class="field"><label>Student number</label><input type="text" id="v-studno"></div>
+            <div class="field">
+              <label>Faculty</label>
+              <select id="v-faculty">
+                <option>Education</option>
+                <option>Science, Agriculture &amp; Engineering</option>
+                <option>Commerce, Administration &amp; Law</option>
+                <option>Humanities &amp; Social Sciences</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Year of study</label>
+              <select id="v-year">
+                <option>1st year</option><option>2nd year</option><option>3rd year</option>
+                <option>4th year</option><option>Postgraduate</option>
+              </select>
+            </div>
+            <div class="hint">Card valid until: <b id="v-validuntil"></b></div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-preview-back">Back</button>
+          <button class="btn btn-primary" id="btn-preview-confirm">Details are correct — choose collection day</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- DAY PICKER -->
+    <section id="screen-day" class="screen">
+      <div class="eyebrow" id="day-eyebrow">Step 06</div>
+      <h1 id="day-title">Choose a collection day</h1>
+      <p class="lede" id="day-lede"></p>
+      <div class="panel">
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-day-back">Back</button>
+          <button class="btn btn-primary" id="btn-day-continue" disabled>Continue to time slots</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TIME PICKER -->
+    <section id="screen-time" class="screen">
+      <div class="eyebrow" id="time-eyebrow">Step 07</div>
+      <h1 id="time-title">Choose a time slot</h1>
+      <p class="lede" id="time-lede"></p>
+      <div class="panel">
+        <div class="slot-grid" id="slot-grid"></div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-time-back">Back</button>
+          <button class="btn btn-primary" id="btn-time-continue" disabled>Confirm booking</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONFIRMATION -->
+    <section id="screen-confirm" class="screen">
+      <div class="eyebrow">Booking confirmed</div>
+      <h1 id="confirm-title">You're booked</h1>
+      <p class="lede" id="confirm-lede"></p>
+      <div class="panel">
+        <div class="confirm-grid">
+          <div class="qr-box">
+            <div id="qrcode"></div>
+            <div class="ref-code" id="ref-code"></div>
+          </div>
+          <div class="confirm-details">
+            <div class="detail-row"><span class="k">Student</span><span class="v" id="cd-name"></span></div>
+            <div class="detail-row"><span class="k">University</span><span class="v">University of Zululand</span></div>
+            <div class="detail-row"><span class="k">Campus</span><span class="v" id="cd-campus"></span></div>
+            <div class="detail-row"><span class="k">Service</span><span class="v" id="cd-service"></span></div>
+            <div class="detail-row"><span class="k">Date</span><span class="v" id="cd-date"></span></div>
+            <div class="detail-row"><span class="k">Time slot</span><span class="v" id="cd-time"></span></div>
+            <div class="detail-row" id="cd-queue-row"><span class="k">Queue number</span><span class="v" id="cd-queue"></span></div>
+          </div>
+        </div>
+        <div class="notice-box" id="notice-primary"></div>
+        <div class="notice-box rust" id="notice-warning"></div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-print">Print notice</button>
+          <button class="btn btn-primary" id="btn-restart">Done — back to dashboard</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROFILE -->
+    <section id="screen-profile" class="screen">
+      <div class="eyebrow">Account</div>
+      <h1>Your profile</h1>
+      <p class="lede">These are the details the University currently holds for your card service account.</p>
+
+      <div class="panel">
+        <div class="detail-row"><span class="k">Full name</span><span class="v" id="pf-name">—</span></div>
+        <div class="detail-row"><span class="k">Student number</span><span class="v mono" id="pf-studno">—</span></div>
+        <div class="detail-row"><span class="k">Email</span><span class="v" id="pf-email">—</span></div>
+        <div class="detail-row"><span class="k">Campus</span><span class="v" id="pf-campus">—</span></div>
+        <div class="detail-row"><span class="k">Pathway</span><span class="v" id="pf-pathway">—</span></div>
+        <div class="detail-row"><span class="k">Identity</span><span class="v" id="pf-identity">—</span></div>
+        <div class="detail-row"><span class="k">POPIA consent</span><span class="v" id="pf-popia">—</span></div>
+        <div class="detail-row"><span class="k">Account created</span><span class="v" id="pf-created">—</span></div>
+
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btn-profile-back">Back to dashboard</button>
+          <button class="btn btn-ghost" id="btn-profile-change-pass">Change password</button>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="eyebrow">Documents on file</div>
+        <h2>Your uploaded documents</h2>
+        <p class="lede">These are the PDFs currently stored against your account. You can view or remove any of them.</p>
+        <div id="pf-docs"></div>
+      </div>
+
+      <div class="panel danger-panel">
+        <div class="eyebrow" style="color:var(--rust);">Danger zone</div>
+        <h2>Delete this account</h2>
+        <p class="lede">Under POPIA you have the right to request erasure of your personal information. Deleting your account removes your user record, uploaded documents, verification records, active sessions, and pending tokens. This cannot be undone.</p>
+        <div class="btn-row">
+          <button class="btn btn-ghost danger" id="btn-profile-delete">Delete account…</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADMIN -->
+    <section id="screen-admin" class="screen">
+      <div class="eyebrow">Admin</div>
+      <h1>Administration</h1>
+      <p class="lede">Review identity verifications, manage accounts, curate the eligible student list, and audit admin actions.</p>
+
+      <div class="admin-tabs">
+        <button class="admin-tab active" data-tab="verify">Verification queue</button>
+        <button class="admin-tab" data-tab="users">All users</button>
+        <button class="admin-tab" data-tab="eligible">Eligible students</button>
+        <button class="admin-tab" data-tab="audit">Audit log</button>
+      </div>
+
+      <div class="admin-panel" id="admin-panel-verify">
+        <div class="panel"><div id="admin-queue">Loading…</div></div>
+      </div>
+
+      <div class="admin-panel" id="admin-panel-users" hidden>
+        <div class="panel">
+          <div class="admin-search-row">
+            <input type="text" id="admin-user-search" placeholder="Search by name, student number or email">
+            <button class="btn btn-ghost" id="admin-user-search-btn">Search</button>
+          </div>
+          <div id="admin-users-list">Loading…</div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="admin-panel-eligible" hidden>
+        <div class="panel">
+          <div class="eyebrow">Approved student list</div>
+          <h2>Bulk upload eligible students</h2>
+          <p class="lede">
+            Upload an Excel (.xlsx) or CSV file with columns for student number, full name, and campus.
+            The parser accepts <span class="mono">student_number</span>, <span class="mono">Add your Student number</span>,
+            <span class="mono">full_name</span>, and split <span class="mono">First Name</span> /
+            <span class="mono">Middle names</span> / <span class="mono">Surnames</span>.
+          </p>
+
+          <div class="bulk-upload-box">
+            <div class="bulk-drop" id="eligible-drop">
+              <div class="bulk-icon">📥</div>
+              <div class="bulk-text">
+                <div class="bulk-title">Drop your .xlsx or .csv here</div>
+                <div class="bulk-sub">or click to choose a file (max 5 MB)</div>
+              </div>
+            </div>
+            <input type="file" id="eligible-file" accept=".xlsx,.xlsm,.csv" style="display:none">
+            <div class="hint" id="eligible-status"></div>
+          </div>
+
+          <div class="btn-row" style="margin-top:16px;">
+            <button class="btn btn-ghost" id="eligible-sync-btn">Sync from Google Sheet</button>
+          </div>
+
+          <div class="admin-search-row" style="margin-top:24px;">
+            <input type="text" id="eligible-search" placeholder="Search by student number or name">
+            <button class="btn btn-ghost" id="eligible-search-btn">Search</button>
+          </div>
+
+          <div id="eligible-list">Loading…</div>
+        </div>
+      </div>
+
+      <div class="admin-panel" id="admin-panel-audit" hidden>
+        <div class="panel"><div id="admin-audit-list">Loading…</div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- POPIA MODAL -->
+<div class="modal-backdrop" id="popia-modal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <div class="eyebrow">Privacy Notice</div>
+      <h2>Protection of Personal Information Act (POPIA)</h2>
+    </div>
+    <div class="modal-body">
+      <p><b>Who is responsible.</b> The University of Zululand is the
+      responsible party for the personal information you provide through
+      this service.</p>
+
+      <p><b>What we collect.</b> Your full name, student number, email
+      address, campus, password (stored only as a secure hash), the proof of
+      registration PDF (and ID PDF if you choose the online pathway),
+      optionally proof of residence, and — if you choose the online
+      pathway — a live selfie and a photograph of your ID for identity
+      verification.</p>
+
+      <p><b>Why we collect it.</b> To verify your registration, produce and
+      issue your student card, confirm your booking, and — for the online
+      pathway — to verify your identity online before your card is printed.</p>
+
+      <p><b>Who we share it with.</b> Only the University's card services
+      team, our identity verification provider (VerifyNow, who store
+      temporary files in Cape Town, South Africa and do not retain reports
+      after delivery), and where required by law, authorised University
+      officials and regulators. We do not sell your personal information.</p>
+
+      <p><b>How long we keep it.</b> Documents are retained only as long as
+      needed to issue your card and for the University's legally required
+      record-keeping period, after which they are securely destroyed.</p>
+
+      <p><b>Your rights.</b> Under POPIA you have the right to access,
+      correct, or delete your personal information, to object to its
+      processing, and to withdraw consent at any time. If a decision about
+      you is made automatically, you have the right to request human
+      review. Contact the Information Officer at
+      <span class="mono">information.officer@unizulu.ac.za</span>.</p>
+
+      <p><b>Complaints.</b> You may lodge a complaint with the Information
+      Regulator of South Africa at <span class="mono">inforeg.org.za</span>.</p>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="popia-modal-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="modal-backdrop" id="change-pass-modal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <div class="eyebrow">Security</div>
+      <h2>Change your password</h2>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Current password</label><input type="password" id="cp-current" placeholder="••••••••"></div>
+      <div class="field"><label>New password</label><input type="password" id="cp-new" placeholder="At least 8 characters"></div>
+      <div class="field"><label>Confirm new password</label><input type="password" id="cp-new2" placeholder="••••••••"></div>
+      <div class="hint" id="cp-status"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="cp-cancel">Cancel</button>
+      <button class="btn btn-primary" id="cp-submit">Change password</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-backdrop" id="delete-modal" hidden>
+  <div class="modal">
+    <div class="modal-head">
+      <div class="eyebrow" style="color:var(--rust);">Danger zone</div>
+      <h2>Delete your account</h2>
+    </div>
+    <div class="modal-body">
+      <p>This will permanently remove your user record, your uploaded
+      documents, verification records, active sessions, and any pending
+      verification or reset tokens. <b>This cannot be undone.</b></p>
+      <div class="field">
+        <label>Type your password to confirm</label>
+        <input type="password" id="del-pass" placeholder="••••••••">
+      </div>
+      <div class="hint" id="del-status"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="del-cancel">Cancel</button>
+      <button class="btn btn-primary danger" id="del-submit">Delete account</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/state.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/verification.js"></script>
+<script src="js/upload.js"></script>
+<script src="js/booking.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+# Campus_ID — UniZulu Student Card Services
+
+A working prototype where University of Zululand students can register,
+consent to POPIA processing, verify their email, upload documents, preview
+their student card, and book a collection or on-campus production slot.
+
+Two pathways are supported:
+
+- **Option 01 — Online production:** upload ID + proof of registration,
+  verify identity online (VerifyNow or manual review), choose a collection
+  day, collect a pre-printed card on campus.
+- **Option 02 — On-campus production:** upload proof of registration only,
+  book a slot, come to campus with your physical ID. Staff verify your
+  identity in person and produce your card on the spot.
+
+Admins manage the approved student list, review identity verifications,
+suspend or delete accounts, and see an audit log of every action.
+
+## Stack
+
+- **Frontend:** vanilla HTML/CSS/JS (`frontend/`)
+- **Backend:** Flask (`backend/`)
+- **Database:** PostgreSQL
+- **Auth:** Bcrypt passwords, email verification, bearer sessions
+- **Compliance:** POPIA consent with timestamp and version
+
+## Setup
+
+1. `createdb unizulu`
+2. `cp .env.example .env` and set `DATABASE_URL` (leave SMTP blank for dev)
+3. `pip install -r requirements.txt`
+4. `python run.py`
+5. Open http://127.0.0.1:5000
+
+## Trying the flow
+
+Register with a student on the approved list:
+
+| Field | Value |
+|---|---|
+| Full name | `Student One` |
+| Student number | `202600001` |
+| Campus | `Kwadlangenzwa` |
+| Email | anything |
+| Password | at least 8 chars |
+
+Tick the POPIA checkbox, submit, then grab the verification link from the
+console (dev mode). Log in, choose a pathway, and continue.
+
+## Making yourself an admin
+
+```sql
+UPDATE users SET is_admin = TRUE WHERE student_number = '202600001';
+
+## Eligible students
+
+Only students on the approved list can register. The list can come from
+two sources:
+
+1. **Google Sheet** (recommended) — when `ELIGIBLE_SHEET_CSV_URL` is set
+   in `.env`, the backend fetches the published CSV on demand, caches it
+   for `ELIGIBLE_SHEET_CACHE_SECONDS`, and checks student numbers against
+   it during registration.
+2. **Local `eligible_students` table** — the fallback. Populated either
+   by the admin's bulk Excel upload or by the admin's "Sync from Google
+   Sheet" button.
+
+### Publishing the Sheet
+
+1. Create a Google Form with fields for student number, name parts, and
+   campus (dropdown: `Kwadlangenzwa`, `Richards Bay`).
+2. Link the form to a Google Sheet.
+3. In the Sheet: **File → Share → Publish to web**.
+4. Choose the responses tab, format **CSV**, then **Publish**.
+5. Copy the URL into `.env` as `ELIGIBLE_SHEET_CSV_URL`.
+6. Restart the backend.
+
+New form submissions appear in the Sheet within a few minutes of the
+next cache refresh, or immediately after an admin clicks **Sync from
+Google Sheet**.
+
+### Admin controls
+
+- **Sync from Google Sheet** — pull the latest data into the local table.
+- **Bulk upload** — still available for manual imports and corrections.
+- **Eligible students list** — search, remove, review.

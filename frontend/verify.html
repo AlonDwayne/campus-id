@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verifying your account — UniZulu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="brand-mark" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 4 C13 10 4 12 2 13 C7 15 12 15 16 13 C13 18 10 24 4 29 C11 28 17 24 20 18 C23 24 29 28 36 29 C30 24 27 18 24 13 C28 15 33 15 38 13 C36 12 27 10 20 4Z" fill="#C99A2E"/>
+        </svg>
+        <div class="brand-text">
+          <span class="brand-name">UNIZULU</span>
+          <span class="brand-sub">Card Services</span>
+        </div>
+      </div>
+    </header>
+    <main style="padding:64px 24px;">
+      <div class="eyebrow">Account verification</div>
+      <h1 id="v-head">Verifying…</h1>
+      <p class="lede" id="v-msg">Please wait while we verify your email.</p>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="/" id="v-go" style="display:none;">Go to login</a>
+      </div>
+    </main>
+  </div>
+  <script>
+    (async () => {
+      const token = new URLSearchParams(location.search).get('token') || '';
+      const head = document.getElementById('v-head');
+      const msg = document.getElementById('v-msg');
+      const go = document.getElementById('v-go');
+      try {
+        const res = await fetch('/api/verify?token=' + encodeURIComponent(token));
+        const data = await res.json();
+        if (res.ok) {
+          head.textContent = 'Account verified ✓';
+          msg.textContent = data.message || 'You can now log in.';
+        } else {
+          head.textContent = 'Verification failed';
+          msg.textContent = data.error || 'The link is invalid or expired.';
+          msg.className = 'hint warn';
+        }
+      } catch {
+        head.textContent = 'Verification failed';
+        msg.textContent = 'Network error. Try again.';
+      }
+      go.style.display = 'inline-flex';
+    })();
+  </script>
+</body>
+</html>
